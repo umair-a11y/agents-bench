@@ -1,14 +1,35 @@
 # agents-bench
 
+**Measure whether your `AGENTS.md` actually makes a coding agent better, instead of just checking that it is well formatted.**
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Built with Bun](https://img.shields.io/badge/Built%20with-Bun-000000.svg?logo=bun&logoColor=white)](https://bun.sh)
+[![Tests](https://img.shields.io/badge/tests-57%20passing-brightgreen.svg)](#development)
+
 > v0.1, experimental. Measures whether an `AGENTS.md` (or `CLAUDE.md`) context
 > file actually improves a coding agent on your repo's golden tasks. Efficacy,
 > not lint.
 
+![agents-bench mock demo](assets/demo.svg)
+
+## Why this exists
+
+Every tool that touches `AGENTS.md` today lints its *syntax*: does it have the
+right headings, is it too long, does it follow a style guide. That tells you the
+file is tidy. It does not tell you the file is *useful*. Those are different
+questions, and only the second one is worth your time.
+
+So `AGENTS.md` files grow by accretion. A rule gets added after a bad agent run,
+another after a code review, another because it felt right. Nobody ever measures
+whether any given line still pulls its weight, because there has been no way to
+measure it. The file becomes folklore.
+
+`agents-bench` exists to turn that folklore into a number.
+
 ## The problem
 
-Every tool that touches `AGENTS.md` today checks its *syntax*: does it have the
-right headings, is it too long, does it follow a style guide. None of them
-answer the question that actually matters:
+Existing `AGENTS.md` tooling stops at the surface: headings, length, style. None
+of it answers the question that actually matters:
 
 **Does this file make the agent better at real tasks, or not?**
 
@@ -24,7 +45,7 @@ The built-in `mock` backend is deterministic and offline. It lets you see the
 A/B orchestration and uplift math work end to end with no API key.
 
 ```sh
-git clone <your-fork-url> agents-bench
+git clone https://github.com/umair-a11y/agents-bench
 cd agents-bench
 bun install
 
@@ -51,6 +72,12 @@ whole point made visible: not every task benefits from context, and the
 aggregate tells you the net effect.
 
 Add `--json` for machine-readable output.
+
+**Run the demo yourself.** The demo above is not a recording of a mockup. It is
+the actual output of `bun run demo` (the command in the box above) against the
+fixture repo in `examples/`. The animation at the top of this README was
+captured straight from that run. Clone the repo, run the command, and you will
+get the same numbers.
 
 ## Real backends
 
@@ -155,6 +182,22 @@ bun run demo      # the mock demo shortcut
 The A/B orchestration, uplift math, and context-file move/restore are all
 covered by the test suite using the mock backend, so the core logic is verified
 without any API.
+
+## Continuous integration
+
+`.github/workflows/codex-review.yml` runs the OpenAI Codex CLI on every pull
+request. It reads this repo's `AGENTS.md`, reviews the PR diff against those
+rules (tests-first, the context-file restore guarantee, mock determinism, and
+the style conventions), and posts the notes as a PR comment. It uses the
+official `openai/codex-action`, which installs Codex and runs `codex exec` for
+you, in a read-only sandbox.
+
+This workflow is dormant by default. To activate it, the maintainer adds an
+`OPENAI_API_KEY` secret to the repository (Settings, Secrets and variables,
+Actions, New repository secret). Until that secret exists the review step is
+skipped, so forks and pull requests from forks never fail and the key is never
+exposed. The key is referenced only as `${{ secrets.OPENAI_API_KEY }}`; it is
+never written into the workflow file.
 
 ## License
 

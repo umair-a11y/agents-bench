@@ -1,0 +1,106 @@
+name: Codex PR review
+
+# Forward-looking infrastructure. This workflow reviews each pull request with
+# the OpenAI Codex CLI (the action below installs Codex and runs `codex exec`
+# under the hood) and posts the review as a PR comment.
+#
+# It is inactive until the maintainer adds an OPENAI_API_KEY repository secret.
+# Without that secret the review job is skipped, so forks and untrusted PRs do
+# not fail and no key is ever exposed.
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+# Least privilege at the top level. The job that needs to comment requests its
+# own pull-requests: write below.
+permissions:
+  contents: read
+
+concurrency:
+  group: codex-review-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  review:
+    name: Codex review
+    runs-on: ubuntu-latest
+    # Only run for PRs from the same repository. Fork PRs cannot read secrets,
+    # so there is nothing to gain by running them here, and this avoids any
+    # exposure surface. The Codex step itself is also gated on the secret below.
+    if: ${{ github.event.pull_request.head.repo.full_name == github.repository }}
+    permissions:
+      contents: read
+    outputs:
+      final_message: ${{ steps.run_codex.outputs.final-message }}
+    steps:
+      - name: Check out PR merge commit
+        uses: actions/checkout@v5
+        with:
+          ref: refs/pull/${{ github.event.pull_request.number }}/merge
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Run Codex review
+        id: run_codex
+        if: ${{ env.OPENAI_API_KEY != '' }}
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        uses: openai/codex-action@v1
+        with:
+          openai-api-key: ${{ secrets.OPENAI_API_KEY }}
+          # Read-only: a reviewer should not edit the working tree.
+          sandbox: read-only
+          # drop-sudo keeps Codex from reading its own API key (matters on a
+          # public repo). This is the action default; set here for clarity.
+          safety-strategy: drop-sudo
+          prompt: |
+            You are reviewing a pull request for the agents-bench repository.
+            Read AGENTS.md in the repository root first; it defines the project's
+            invariants and conventions. The checkout is the PR merge commit, so
+            the second parent is the base branch.
+
+            Run this to see only the pull request's changes:
+              git diff HEAD^1...HEAD
+
+            Focus your review on the AGENTS.md working rules, specifically:
+              - Tests-first: behavior changes must come with test changes.
+              - The restore guarantee in src/context.ts (withContextHidden must
+                always restore the context file in a finally block).
+              - Mock determinism: no randomness or time in the mock backend.
+              - uplift.ts stays pure (no I/O).
+              - No destructive operations on user files.
+              - Style: straight quotes only, no em dashes or en dashes, and bun
+                instead of npm, yarn, or pnpm.
+
+            Output concise Markdown review notes. Use a short bullet list grouped
+            into Blocking, Should-fix, and Nits. If you find nothing material,
+            say so in one line. Do not restate the diff.
+
+  comment:
+    name: Post review comment
+    needs: review
+    runs-on: ubuntu-latest
+    if: ${{ needs.review.outputs.final_message != '' }}
+    permissions:
+      pull-requests: write
+    steps:
+      - name: Comment on the PR
+        uses: actions/github-script@v7
+        env:
+          CODEX_MESSAGE: ${{ needs.review.outputs.final_message }}
+        with:
+          script: |
+            const body = [
+              '## Codex review',
+              '',
+              process.env.CODEX_MESSAGE,
+              '',
+              '_Automated review by the OpenAI Codex CLI. Advisory only._',
+            ].join('\n');
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.pull_request.number,
+              body,
+            });
