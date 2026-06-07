@@ -4,7 +4,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Built with Bun](https://img.shields.io/badge/Built%20with-Bun-000000.svg?logo=bun&logoColor=white)](https://bun.sh)
-[![Tests](https://img.shields.io/badge/tests-57%20passing-brightgreen.svg)](#development)
+[![Tests](https://img.shields.io/badge/tests-63%20passing-brightgreen.svg)](#development)
 
 > v0.1, experimental. Measures whether an `AGENTS.md` (or `CLAUDE.md`) context
 > file actually improves a coding agent on your repo's golden tasks. Efficacy,
@@ -55,15 +55,18 @@ bun run src/cli.ts --agent mock --config examples/bench.yaml --repo examples/fix
 You should see:
 
 ```
-TASK              WITH  WITHOUT  UPLIFT
-----------------  ----  -------  ------
-add-readme-badge  100%  100%     0%
-write-changelog   100%  100%     0%
-fix-lint-config   100%  0%       +100%
-refactor-helpers  100%  0%       +100%
+TASK              WITH  WITHOUT  UPLIFT  95% CI         P      SIGNAL
+----------------  ----  -------  ------  -------------  -----  ---------------
+add-readme-badge  100%  100%     0%      [-56%, +56%]   1.000  not significant
+write-changelog   100%  100%     0%      [-56%, +56%]   1.000  not significant
+fix-lint-config   100%  0%       +100%   [-12%, +100%]  0.014  low-confidence
+refactor-helpers  100%  0%       +100%   [-12%, +100%]  0.014  low-confidence
 
 context file: AGENTS.md   seeds: 3
 aggregate uplift: +50%
+aggregate CI: [+1%, +75%]
+aggregate p-value: 0.005
+aggregate signal: significant
 ```
 
 The mock is rigged to "succeed more often when the context file is present", so
@@ -160,9 +163,11 @@ This is v0.1. Be honest with yourself about what the number means.
 - **Agent runs are nondeterministic.** A single seed is noise. Use several
   seeds and treat small uplift values as "not measured", not "no effect". The
   more variance your agent has, the more seeds you need.
-- **No statistical significance test yet.** The tool reports raw rates and their
-  difference. It does not tell you whether an uplift is significant given your
-  seed count. Treat large, repeatable uplift as the signal.
+- **Significance is a guide, not proof.** The tool reports a two-proportion
+  z-test p-value and a 95% Wilson score interval for the pass-rate difference.
+  Small seed counts can still produce wide intervals, so treat
+  "low-confidence" and "not significant" as noise warnings, not as proof that
+  the context file has no effect.
 - **Checks are as good as you make them.** A `check` that always passes will
   report zero uplift no matter what. Write checks that actually fail when the
   task is not done.

@@ -5,3 +5,6 @@ node_modules/
 # agents-bench runtime artifacts
 .agents-bench-mock-result
 *.agents-bench-hidden
+
+# codex exec scratch workspace
+.prd/

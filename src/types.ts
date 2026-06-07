@@ -32,6 +32,26 @@ export interface RunOutcome {
   agentExitCode: number;
 }
 
+/** Wilson score confidence interval for a rate difference. */
+export interface ConfidenceInterval {
+  low: number;
+  high: number;
+  confidenceLevel: number;
+}
+
+/** Statistical comparison of with-context and without-context pass rates. */
+export interface UpliftStatistics {
+  withPasses: number;
+  withTotal: number;
+  withoutPasses: number;
+  withoutTotal: number;
+  difference: number;
+  pValue: number;
+  confidenceInterval: ConfidenceInterval;
+  significant: boolean;
+  significanceLabel: "significant" | "not_significant" | "low_confidence";
+}
+
 /** Aggregated results for one task across all seeds and both conditions. */
 export interface TaskResult {
   id: string;
@@ -47,6 +67,8 @@ export interface TaskResult {
   passRateWithout: number;
   /** Uplift = passRateWith - passRateWithout, range -1..1. */
   uplift: number;
+  /** Two-proportion z-test and Wilson interval for the uplift. */
+  statistics: UpliftStatistics;
 }
 
 /** Full benchmark report across all tasks. */
@@ -56,4 +78,6 @@ export interface BenchReport {
   tasks: TaskResult[];
   /** Mean uplift across all tasks, range -1..1. */
   aggregateUplift: number;
+  /** Pooled statistical comparison across all task outcomes. */
+  aggregateStatistics: UpliftStatistics;
 }

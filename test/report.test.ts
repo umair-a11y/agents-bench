@@ -25,6 +25,8 @@ describe("formatTable", () => {
     expect(out).toContain("WITH");
     expect(out).toContain("WITHOUT");
     expect(out).toContain("UPLIFT");
+    expect(out).toContain("CI");
+    expect(out).toContain("SIGNAL");
     expect(out).toContain("easy");
     expect(out).toContain("hard");
   });
@@ -34,11 +36,15 @@ describe("formatTable", () => {
     expect(out).toContain("100%");
     expect(out).toContain("0%");
     expect(out).toContain("+100%"); // hard task uplift
+    expect(out).toContain("[");
+    expect(out).toContain("low-confidence");
   });
 
   test("shows aggregate and metadata footer", () => {
     const out = formatTable(sampleReport());
     expect(out).toContain("aggregate uplift: +50%");
+    expect(out).toContain("aggregate CI:");
+    expect(out).toContain("aggregate signal:");
     expect(out).toContain("context file: AGENTS.md");
     expect(out).toContain("seeds: 2");
   });
@@ -57,8 +63,14 @@ describe("formatJson", () => {
     expect(parsed.context_file).toBe("AGENTS.md");
     expect(parsed.seeds).toBe(2);
     expect(parsed.aggregateUplift).toBeCloseTo(0.5, 10);
+    expect(parsed.aggregateStatistics.difference).toBeCloseTo(0.5, 10);
+    expect(parsed.aggregateStatistics.pValue).toBeNumber();
+    expect(parsed.aggregateStatistics.confidenceInterval.low).toBeNumber();
+    expect(parsed.aggregateStatistics.confidenceInterval.high).toBeNumber();
+    expect(parsed.aggregateStatistics.significanceLabel).toBeString();
     expect(parsed.tasks.length).toBe(2);
     expect(parsed.tasks[1].id).toBe("hard");
     expect(parsed.tasks[1].uplift).toBe(1);
+    expect(parsed.tasks[1].statistics.difference).toBe(1);
   });
 });
