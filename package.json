@@ -1,0 +1,32 @@
+{
+  "name": "agents-bench",
+  "version": "0.1.0",
+  "description": "Measure whether an AGENTS.md (or CLAUDE.md) context file actually improves a coding agent's success on a repo's golden tasks. Efficacy, not lint.",
+  "type": "module",
+  "license": "MIT",
+  "author": "Umair Gill",
+  "bin": {
+    "agents-bench": "src/cli.ts"
+  },
+  "scripts": {
+    "start": "bun run src/cli.ts",
+    "test": "bun test",
+    "demo": "bun run src/cli.ts --agent mock --config examples/bench.yaml --repo examples/fixture"
+  },
+  "keywords": [
+    "agents.md",
+    "claude.md",
+    "coding-agents",
+    "benchmark",
+    "evaluation",
+    "codex",
+    "claude-code"
+  ],
+  "engines": {
+    "bun": ">=1.1.0"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "typescript": "^6.0.3"
+  }
+}

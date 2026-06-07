@@ -1,0 +1,32 @@
+# Example bench.yaml for the mock-backend demo.
+#
+# The mock agent writes "pass" or "fail" to .agents-bench-mock-result based on
+# whether the context file (AGENTS.md) is present. Each check below simply reads
+# that file. With AGENTS.md present every task passes; with it moved aside, only
+# the tasks the mock deems "easy" pass, producing a real, deterministic uplift.
+#
+# For a real backend, replace `agent` with one of:
+#   agent: 'codex exec "{{prompt}}"'
+#   agent: 'claude -p "{{prompt}}"'
+# and replace each `check` with a real assertion (a test command, a grep, etc).
+
+agent: mock
+context_file: AGENTS.md
+seeds: 3
+
+tasks:
+  - id: add-readme-badge
+    prompt: "Add a build status badge to the top of README.md."
+    check: 'test "$(cat .agents-bench-mock-result)" = "pass"'
+
+  - id: write-changelog
+    prompt: "Create a CHANGELOG.md following Keep a Changelog format."
+    check: 'test "$(cat .agents-bench-mock-result)" = "pass"'
+
+  - id: fix-lint-config
+    prompt: "Update the lint config to match the project's conventions."
+    check: 'test "$(cat .agents-bench-mock-result)" = "pass"'
+
+  - id: refactor-helpers
+    prompt: "Extract duplicated helpers into a shared module."
+    check: 'test "$(cat .agents-bench-mock-result)" = "pass"'
