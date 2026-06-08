@@ -188,21 +188,47 @@ The A/B orchestration, uplift math, and context-file move/restore are all
 covered by the test suite using the mock backend, so the core logic is verified
 without any API.
 
-## Continuous integration
+## Code review with Codex
 
-`.github/workflows/codex-review.yml` runs the OpenAI Codex CLI on every pull
-request. It reads this repo's `AGENTS.md`, reviews the PR diff against those
-rules (tests-first, the context-file restore guarantee, mock determinism, and
-the style conventions), and posts the notes as a PR comment. It uses the
-official `openai/codex-action`, which installs Codex and runs `codex exec` for
-you, in a read-only sandbox.
+The primary review path is local and uses a Codex / ChatGPT subscription. No
+API key, no CI secret.
 
-This workflow is dormant by default. To activate it, the maintainer adds an
+```sh
+bun run review          # review the current branch against main
+# or directly:
+./scripts/codex-review.sh           # vs main
+./scripts/codex-review.sh develop   # vs a different base branch
+```
+
+This runs `codex exec review` in a read-only sandbox against the base branch
+(default `main`). Codex reads this repo's `AGENTS.md`, diffs your branch against
+the base, and prints review notes grouped into Blocking, Should-fix, and Nits.
+It never edits the working tree. The only requirement is the Codex CLI signed in
+with your ChatGPT account:
+
+```sh
+npm install -g @openai/codex   # or: brew install codex
+codex login                    # sign in with ChatGPT, no API key
+```
+
+If `codex` is not on your PATH, the script tells you exactly this and exits
+nonzero, so it fails loud rather than silently doing nothing.
+
+### Optional CI workflow (inactive by default)
+
+`.github/workflows/codex-review.yml` is a secondary, opt-in path for
+contributors who already have an OpenAI API key, or for later once the repo has
+API credits (for example via the Codex Open Source Fund). It runs the same kind
+of review on each pull request and posts the notes as a PR comment, using the
+official `openai/codex-action`.
+
+It is dormant by default. It activates only if the maintainer adds an
 `OPENAI_API_KEY` secret to the repository (Settings, Secrets and variables,
 Actions, New repository secret). Until that secret exists the review step is
 skipped, so forks and pull requests from forks never fail and the key is never
 exposed. The key is referenced only as `${{ secrets.OPENAI_API_KEY }}`; it is
-never written into the workflow file.
+never written into the workflow file. The local `bun run review` path above
+needs none of this.
 
 ## License
 

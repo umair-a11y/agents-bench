@@ -1,12 +1,19 @@
 name: Codex PR review
 
-# Forward-looking infrastructure. This workflow reviews each pull request with
-# the OpenAI Codex CLI (the action below installs Codex and runs `codex exec`
-# under the hood) and posts the review as a PR comment.
+# OPTIONAL and INACTIVE by default. This workflow is NOT the primary review
+# path for this project. The maintainer reviews PRs locally with
+# `bun run review` (see scripts/codex-review.sh and the README), which uses a
+# Codex / ChatGPT subscription and needs no API key and no CI secret.
 #
-# It is inactive until the maintainer adds an OPENAI_API_KEY repository secret.
-# Without that secret the review job is skipped, so forks and untrusted PRs do
-# not fail and no key is ever exposed.
+# This file exists for contributors who already have an OpenAI API key, or for
+# later, once the repo has API credits (for example via the Codex Open Source
+# Fund). It reviews each pull request with the OpenAI Codex CLI (the action
+# below installs Codex and runs `codex exec` under the hood) and posts the
+# review as a PR comment.
+#
+# It stays inactive until the maintainer adds an OPENAI_API_KEY repository
+# secret. Without that secret the review job is skipped, so forks and untrusted
+# PRs do not fail and no key is ever exposed.
 
 on:
   pull_request:

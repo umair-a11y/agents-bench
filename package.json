@@ -11,7 +11,8 @@
   "scripts": {
     "start": "bun run src/cli.ts",
     "test": "bun test",
-    "demo": "bun run src/cli.ts --agent mock --config examples/bench.yaml --repo examples/fixture"
+    "demo": "bun run src/cli.ts --agent mock --config examples/bench.yaml --repo examples/fixture",
+    "review": "bash scripts/codex-review.sh"
   },
   "keywords": [
     "agents.md",

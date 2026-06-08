@@ -65,12 +65,27 @@ examples/      example bench.yaml + a tiny fixture repo for the mock demo
 
 ## How we use Codex to maintain this
 
-This is forward-looking: the maintainer plans to use the OpenAI Codex CLI for
-ongoing upkeep. None of this claims past Codex commits.
+The maintainer reviews changes locally with the OpenAI Codex CLI, signed in with
+a Codex / ChatGPT subscription (no API key). Before merging a pull request, the
+practice is to run a read-only review against the base branch:
 
-- **PR review:** run `codex exec` over the diff of an incoming pull request to
-  flag missing tests, broken invariants (especially the restore guarantee and
-  mock determinism), and style violations (stray em dashes, npm usage).
+```sh
+bun run review                 # wraps the command below
+codex exec -s read-only review --base main
+```
+
+This reads this AGENTS.md, diffs the branch against `main`, and flags missing
+tests, broken invariants (especially the restore guarantee and mock
+determinism), and style violations (stray em dashes, npm usage). It is
+read-only, so it never edits the tree.
+
+Forward-looking, not yet active: an optional CI workflow
+(`.github/workflows/codex-review.yml`) can run the same kind of review on each
+PR, but only once an `OPENAI_API_KEY` secret exists. There is no API-key CI
+running today; the local subscription review above is the real path.
+
+Other upkeep the maintainer uses Codex for, ad hoc and local:
+
 - **Issue triage:** summarize new issues, label them, and propose a minimal
   reproduction or a failing test that captures the bug before any fix.
 - **Release notes:** generate a changelog entry from the commit range since the
